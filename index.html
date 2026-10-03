@@ -1,0 +1,527 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SDGs不塑永續 -淨灘</title>
+    <!-- Tailwind CSS for styling -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@600&family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            user-select: none;
+            overflow: hidden;
+            touch-action: manipulation;
+        }
+        .title-font {
+            font-family: 'Fredoka', sans-serif;
+        }
+        /* Custom wave animation */
+        @keyframes wave {
+            0% { transform: translateX(0) translateZ(0) scaleY(1); }
+            50% { transform: translateX(-25%) translateZ(0) scaleY(0.85); }
+            100% { transform: translateX(-50%) translateZ(0) scaleY(1); }
+        }
+        .wave-anim {
+            animation: wave 8s infinite linear;
+        }
+        .wave-anim2 {
+            animation: wave 5s infinite linear reverse;
+            opacity: 0.5;
+        }
+        /* Floating score animation */
+        @keyframes floatUp {
+            0% { opacity: 1; transform: translateY(0) scale(1); }
+            100% { opacity: 0; transform: translateY(-40px) scale(1.2); }
+        }
+        .floating-score {
+            animation: floatUp 0.7s ease-out forwards;
+        }
+        /* Trash disappear/pop effect */
+        @keyframes popOut {
+            0% { transform: scale(var(--base-scale, 1)) rotate(var(--base-rotate, 0deg)); opacity: 1; }
+            50% { transform: scale(1.4) rotate(var(--base-rotate, 0deg)); opacity: 0.8; }
+            100% { transform: scale(0) rotate(var(--base-rotate, 0deg)); opacity: 0; visibility: hidden; }
+        }
+        .trash-item {
+            cursor: pointer;
+            transition: filter 0.2s, transform 0.2s;
+            position: absolute;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            padding: 8px;
+            z-index: 10;
+        }
+        .trash-item:hover {
+            filter: brightness(1.2) drop-shadow(0 4px 8px rgba(0,0,0,0.3));
+            transform: scale(1.15) rotate(var(--base-rotate, 0deg)) !important;
+        }
+        .trash-picked {
+            animation: popOut 0.35s ease-out forwards !important;
+            pointer-events: none !important;
+        }
+        /* Wind gust floating animation */
+        @keyframes windBlow {
+            0% { transform: translate(0, 0) rotate(var(--base-rotate, 0deg)) scale(var(--base-scale, 1)); }
+            20% { transform: translate(35px, -12px) rotate(calc(var(--base-rotate, 0deg) + 25deg)) scale(var(--base-scale, 1)); }
+            40% { transform: translate(65px, 8px) rotate(calc(var(--base-rotate, 0deg) - 15deg)) scale(var(--base-scale, 1)); }
+            60% { transform: translate(40px, -6px) rotate(calc(var(--base-rotate, 0deg) + 10deg)) scale(var(--base-scale, 1)); }
+            80% { transform: translate(15px, 4px) rotate(calc(var(--base-rotate, 0deg) - 5deg)) scale(var(--base-scale, 1)); }
+            100% { transform: translate(0, 0) rotate(var(--base-rotate, 0deg)) scale(var(--base-scale, 1)); }
+        }
+        .wind-gust-anim {
+            animation: windBlow 3.5s ease-in-out forwards !important;
+        }
+        /* Cleaning drone animation */
+        @keyframes droneFly {
+            0% { transform: translate(0, 0) scale(1); }
+            50% { transform: translate(15px, -10px) scale(1.05); }
+            100% { transform: translate(0, 0) scale(1); }
+        }
+        .drone-anim {
+            animation: droneFly 2s infinite ease-in-out;
+        }
+        /* Wind cloud particle animation */
+        @keyframes cloudMove {
+            0% { transform: translateX(-100px); opacity: 0; }
+            20% { opacity: 0.7; }
+            80% { opacity: 0.7; }
+            100% { transform: translateX(calc(100vw + 100px)); opacity: 0; }
+        }
+        .wind-particle {
+            animation: cloudMove 3s linear forwards;
+            pointer-events: none;
+            z-index: 25;
+        }
+    </style>
+</head>
+<body class="bg-sky-50 h-screen w-screen flex flex-col justify-between relative">
+
+    <!-- 頁首：左上角大粗體標題，右上角分數與成績 -->
+    <header class="w-full bg-white/90 backdrop-blur-md shadow-md px-6 py-3 flex justify-between items-center z-30 shrink-0">
+        <div class="flex items-center space-x-3">
+            <div class="bg-emerald-600 text-white p-2.5 rounded-2xl shadow-md">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-7 w-7" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+            </div>
+            <div>
+                <h1 class="text-2xl md:text-3xl font-black text-emerald-800 tracking-tight title-font">
+                    SDGs不塑永續 -淨灘
+                </h1>
+                <p class="text-xs text-emerald-600 font-semibold">SDG 14: 保育及永續利用海洋生態系 | 關卡: <span id="level-display" class="font-bold">1</span></p>
+            </div>
+        </div>
+
+        <!-- 右上角成績與一鍵自動撿取按鈕及分數區 -->
+        <div class="flex items-center space-x-2 md:space-x-4">
+            <!-- 風勢倒數計時顯示 -->
+            <div id="wind-timer-container" class="hidden sm:flex bg-teal-50 border border-teal-200 px-3 py-2 rounded-2xl shadow-inner items-center space-x-1.5 text-xs text-teal-700 font-bold">
+                <span>💨 強風倒數:</span>
+                <span id="wind-timer" class="text-teal-900 font-extrabold title-font">30s</span>
+            </div>
+
+            <!-- 一鍵自動撿取按鈕 -->
+            <button id="auto-clean-btn" onclick="triggerAutoClean()" class="bg-gradient-to-r from-teal-500 to-emerald-600 hover:from-teal-600 hover:to-emerald-700 text-white font-bold px-3 md:px-4 py-2.5 rounded-2xl shadow-md transition transform active:scale-95 flex items-center space-x-2 title-font text-xs md:text-sm">
+                <span class="text-base md:text-lg drone-anim">🤖</span>
+                <span class="hidden sm:inline">一鍵自動撿取</span>
+                <span class="sm:hidden">自動淨灘</span>
+            </button>
+
+            <div class="bg-amber-100 border border-amber-300 px-3 md:px-4 py-2 rounded-2xl shadow-inner flex items-center space-x-1.5 md:space-x-2">
+                <span class="text-amber-700 font-bold text-xs md:text-sm">⭐ 分數</span>
+                <span id="score" class="text-lg md:text-2xl font-extrabold text-amber-800 title-font">0</span>
+            </div>
+            <div class="bg-emerald-100 border border-emerald-300 px-3 md:px-4 py-2 rounded-2xl shadow-inner flex items-center space-x-1.5 md:space-x-2">
+                <span class="text-emerald-800 font-bold text-xs md:text-sm">🗑️ 剩餘</span>
+                <span id="remaining" class="text-lg md:text-2xl font-extrabold text-emerald-900 title-font">50</span>
+            </div>
+        </div>
+    </header>
+
+    <!-- 遊戲主畫面：上半部海洋天空，下半部沙灘 -->
+    <main class="relative flex-1 w-full flex flex-col overflow-hidden">
+        
+        <!-- 上半部：天空與海洋背景 -->
+        <div class="h-2/5 w-full bg-gradient-to-b from-sky-300 via-sky-200 to-teal-400 relative overflow-hidden flex flex-col justify-end">
+            <!-- 裝飾雲朵 -->
+            <div class="absolute top-6 left-12 bg-white/70 backdrop-blur-sm rounded-full h-8 w-28 animate-pulse"></div>
+            <div class="absolute top-10 right-20 bg-white/60 backdrop-blur-sm rounded-full h-10 w-36 animate-pulse" style="animation-delay: 1s;"></div>
+            
+            <!-- 遠方海浪動態效果 -->
+            <div class="relative w-full h-14 overflow-hidden">
+                <div class="absolute bottom-0 left-0 w-[200%] h-8 bg-teal-300/60 rounded-t-[100%] wave-anim"></div>
+                <div class="absolute bottom-0 left-0 w-[200%] h-6 bg-cyan-200/50 rounded-t-[100%] wave-anim2"></div>
+            </div>
+        </div>
+
+        <!-- 下半部：金色沙灘區（垃圾隨機散佈區域） -->
+        <div id="beach-area" class="h-3/5 w-full bg-gradient-to-b from-amber-100 via-amber-200 to-yellow-200 relative overflow-hidden border-t-4 border-amber-300/60 shadow-inner">
+            <!-- 沙灘細節紋理背景 -->
+            <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#d97706_1.5px,transparent_1.5px)] [background-size:20px_20px] pointer-events-none"></div>
+            <!-- 垃圾物件將由 JavaScript 動態生成於此區塊 -->
+        </div>
+
+        <!-- 底部 AI 回饋提示橫幅 -->
+        <div id="ai-tip-box" class="absolute bottom-4 left-1/2 -translate-x-1/2 bg-white/95 backdrop-blur-md px-6 py-2 rounded-full shadow-lg border border-emerald-200 flex items-center space-x-3 z-30 transition-all duration-300 max-w-xl w-[90%] md:w-auto">
+            <span class="text-xl">💡</span>
+            <p id="ai-tip-text" class="text-xs md:text-sm font-semibold text-slate-700 truncate">AI 環保小幫手：每 30 秒會吹起陣陣海風使垃圾飄動，點擊垃圾清理！</p>
+        </div>
+    </main>
+
+    <!-- 任務成功彈出對話框 -->
+    <div id="victory-modal" class="fixed inset-0 bg-black/50 backdrop-blur-sm flex items-center justify-center z-50 hidden opacity-0 transition-opacity duration-300">
+        <div class="bg-white rounded-3xl p-8 max-w-md w-full mx-4 shadow-2xl transform scale-95 transition-transform duration-300 text-center border-4 border-emerald-400">
+            <div class="w-20 h-20 bg-emerald-100 rounded-full flex items-center justify-center mx-auto mb-4 text-4xl shadow-inner animate-bounce">
+                🎉
+            </div>
+            <h2 class="text-3xl font-black text-emerald-800 title-font mb-2">任務成功！</h2>
+            <p class="text-slate-600 text-sm mb-6">太棒了！沙灘已完全恢復乾淨美麗的面貌，生態永續由您守護！</p>
+            
+            <div class="bg-emerald-50 rounded-2xl p-4 mb-6 border border-emerald-200">
+                <div class="text-sm text-emerald-700 font-medium">最終獲得積分</div>
+                <div id="final-score" class="text-4xl font-black text-emerald-600 title-font my-1">0</div>
+                <div class="text-xs text-slate-500 mt-2">✨ 環保成就：海灘守護大使</div>
+            </div>
+
+            <div class="flex space-x-3">
+                <button onclick="restartGame()" class="flex-1 bg-emerald-500 hover:bg-emerald-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition transform active:scale-95 title-font">
+                    重新挑戰
+                </button>
+                <button onclick="nextLevel()" class="flex-1 bg-amber-500 hover:bg-amber-600 text-white font-bold py-3 px-6 rounded-2xl shadow-lg transition transform active:scale-95 title-font">
+                    前往下一關
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 各式垃圾資料定義：包含名稱、體積大小、積分與精美 SVG 圖示
+        const trashTypes = [
+            {
+                name: '寶特瓶',
+                points: 10,
+                size: 'medium',
+                svg: `<svg viewBox="0 0 24 24" class="w-8 h-10 drop-shadow-md pointer-events-none"><path fill="#38bdf8" d="M9 2h6v2H9z"/><path fill="#0ea5e9" d="M10 4h4v3h-4z"/><path fill="#e0f2fe" opacity="0.8" d="M8 7h8v13a2 2 0 01-2 2h-4a2 2 0 01-2-2V7z"/></svg>`
+            },
+            {
+                name: '塑膠袋',
+                points: 5,
+                size: 'small',
+                svg: `<svg viewBox="0 0 24 24" class="w-9 h-9 drop-shadow-md pointer-events-none"><path fill="#f43f5e" opacity="0.85" d="M7 3h10v2H7z"/><path fill="#fb7185" d="M5 5h14l-2 16H7L5 5z"/><path fill="#ffe4e6" opacity="0.5" d="M8 9h8v2H8z"/></svg>`
+            },
+            {
+                name: '紙類餐盒',
+                points: 15,
+                size: 'large',
+                svg: `<svg viewBox="0 0 24 24" class="w-12 h-10 drop-shadow-md pointer-events-none"><path fill="#fef08a" d="M3 8l3-4h12l3 4H3z"/><path fill="#fde047" d="M4 9h16v11a1 1 0 01-1 1H5a1 1 0 01-1-1V9z"/><path fill="#ca8a04" opacity="0.3" d="M8 12h8v2H8z"/></svg>`
+            },
+            {
+                name: '保麗龍',
+                points: 20,
+                size: 'large',
+                svg: `<svg viewBox="0 0 24 24" class="w-12 h-11 drop-shadow-md pointer-events-none"><path fill="#f1f5f9" d="M2 6h20v12H2z"/><circle cx="6" cy="10" r="1.5" fill="#cbd5e1"/><circle cx="12" cy="14" r="2" fill="#cbd5e1"/><circle cx="18" cy="9" r="1.5" fill="#cbd5e1"/><circle cx="15" cy="16" r="1" fill="#cbd5e1"/><circle cx="8" cy="15" r="1.5" fill="#cbd5e1"/></svg>`
+            },
+            {
+                name: '飲料杯',
+                points: 12,
+                size: 'medium',
+                svg: `<svg viewBox="0 0 24 24" class="w-8 h-12 drop-shadow-md pointer-events-none"><path fill="#fb923c" d="M7 4h10l-1.5 15H8.5L7 4z"/><path fill="#fdba74" d="M6 3h12v2H6z"/><path fill="#fff" opacity="0.5" d="M11 7h2v9h-2z"/><path fill="#78350f" d="M11.5 1l1-3h1l-1 3z"/></svg>`
+            },
+            {
+                name: '漂流廢棄物',
+                points: 25,
+                size: 'large',
+                svg: `<svg viewBox="0 0 24 24" class="w-14 h-11 drop-shadow-md pointer-events-none"><path fill="#78350f" d="M3 10c2-3 8-4 14-2l4 3-15 5-3-6z"/><path fill="#92400e" opacity="0.6" d="M6 14l12-4 2 2-12 4z"/></svg>`
+            }
+        ];
+
+        // AI 鼓勵回饋語錄
+        const aiFeedbackList = [
+            "太棒了！減少一個垃圾，海洋生物就安全一分！",
+            "好身手！這件大型廢棄物提供了很高的環保積分！",
+            "落實 SDGs 永續行動，從你我隨手撿垃圾開始！",
+            "沙灘正在恢復乾淨的蔚藍風貌，繼續加油！",
+            "塑膠微粒危害海洋，及時清除垃圾非常重要！"
+        ];
+
+        let score = 0;
+        let remaining = 50;
+        let level = 1;
+        let isAutoCleaning = false;
+        let windTimeLeft = 30;
+        let gameTimer = null;
+        let windIntervalTimer = null;
+
+        // 初始化遊戲
+        function initGame() {
+            isAutoCleaning = false;
+            windTimeLeft = 30;
+            if (gameTimer) clearInterval(gameTimer);
+            if (windIntervalTimer) clearInterval(windIntervalTimer);
+
+            const beachArea = document.getElementById('beach-area');
+            beachArea.innerHTML = `
+                <div class="absolute inset-0 opacity-20 bg-[radial-gradient(#d97706_1.5px,transparent_1.5px)] [background-size:20px_20px] pointer-events-none"></div>
+            `;
+            score = 0;
+            remaining = 50;
+            updateUI();
+            document.getElementById('level-display').innerText = level;
+            document.getElementById('wind-timer').innerText = `${windTimeLeft}s`;
+
+            // 隱藏勝利視窗
+            const modal = document.getElementById('victory-modal');
+            modal.classList.add('hidden', 'opacity-0');
+            modal.firstElementChild.classList.remove('scale-100');
+            modal.firstElementChild.classList.add('scale-95');
+
+            const areaWidth = beachArea.clientWidth - 80;
+            const areaHeight = beachArea.clientHeight - 80;
+
+            // 隨機生成 50 個垃圾
+            for (let i = 0; i < 50; i++) {
+                const randomTrash = trashTypes[Math.floor(Math.random() * trashTypes.length)];
+                
+                const left = Math.max(10, Math.floor(Math.random() * Math.max(areaWidth, 100)));
+                const top = Math.max(10, Math.floor(Math.random() * Math.max(areaHeight, 100)));
+                
+                const rotateDeg = Math.floor(Math.random() * 360) - 180;
+                const scaleVal = randomTrash.size === 'large' ? 1.2 : (randomTrash.size === 'small' ? 0.85 : 1.0);
+
+                const item = document.createElement('div');
+                item.className = 'trash-item';
+                item.dataset.points = randomTrash.points;
+                item.dataset.name = randomTrash.name;
+                item.style.left = `${left}px`;
+                item.style.top = `${top}px`;
+                item.style.setProperty('--base-rotate', `${rotateDeg}deg`);
+                item.style.setProperty('--base-scale', scaleVal);
+                item.style.transform = `rotate(${rotateDeg}deg) scale(${scaleVal})`;
+                
+                item.innerHTML = randomTrash.svg;
+
+                const handlePick = (e) => {
+                    e.stopPropagation();
+                    if (isAutoCleaning) return;
+                    pickTrash(e, randomTrash, item);
+                };
+
+                item.addEventListener('click', handlePick);
+                item.addEventListener('touchend', (e) => {
+                    e.preventDefault();
+                    if (isAutoCleaning) return;
+                    handlePick(e);
+                }, { passive: false });
+
+                beachArea.appendChild(item);
+            }
+
+            // 啟動 30 秒風勢計時器
+            startWindCountdown();
+        }
+
+        // 啟動 30 秒倒數計時與風暴吹拂循環
+        function startWindCountdown() {
+            gameTimer = setInterval(() => {
+                if (remaining <= 0) return;
+                windTimeLeft--;
+                if (windTimeLeft <= 0) {
+                    triggerWindGust();
+                    windTimeLeft = 30;
+                }
+                document.getElementById('wind-timer').innerText = `${windTimeLeft}s`;
+            }, 1000);
+        }
+
+        // 觸發強風吹過畫面，使所有未清理的垃圾飄動
+        function triggerWindGust() {
+            const tipText = document.getElementById('ai-tip-text');
+            tipText.innerHTML = `💨 呼～陣陣海風吹過沙灘，所有未清理的垃圾隨風飄動了起來！`;
+            
+            // 產生風雲視覺特效
+            createWindParticles();
+
+            // 為所有剩餘的垃圾套用風吹飄動動畫
+            const remainingTrash = document.querySelectorAll('.trash-item:not(.trash-picked)');
+            remainingTrash.forEach(item => {
+                item.classList.remove('wind-gust-anim');
+                void item.offsetWidth; // 觸發重繪
+                item.classList.add('wind-gust-anim');
+
+                // 動畫結束後移除類別
+                setTimeout(() => {
+                    item.classList.remove('wind-gust-anim');
+                }, 3500);
+            });
+        }
+
+        // 建立畫面上的風向視覺粒子
+        function createWindParticles() {
+            const beachArea = document.getElementById('beach-area');
+            for (let i = 0; i < 6; i++) {
+                const cloud = document.createElement('div');
+                cloud.className = 'absolute bg-white/40 backdrop-blur-xs rounded-full h-3 w-16 wind-particle';
+                cloud.style.top = `${Math.random() * 80}%`;
+                cloud.style.animationDuration = `${2 + Math.random() * 1.5}s`;
+                cloud.style.animationDelay = `${Math.random() * 0.5}s`;
+                beachArea.appendChild(cloud);
+                setTimeout(() => cloud.remove(), 4000);
+            }
+        }
+
+        // 撿起單個垃圾核心邏輯
+        function pickTrash(e, trashData, element) {
+            if (element.classList.contains('trash-picked')) return;
+
+            element.classList.add('trash-picked');
+            
+            score += trashData.points;
+            remaining -= 1;
+            updateUI();
+
+            const clientX = e.clientX || (e.changedTouches && e.changedTouches[0].clientX) || (element.getBoundingClientRect().left + 25);
+            const clientY = e.clientY || (e.changedTouches && e.changedTouches[0].clientY) || (element.getBoundingClientRect().top + 25);
+            showFloatingScore(clientX, clientY, `+${trashData.points}`);
+
+            updateAIFeedback(trashData.name);
+            playPopSound();
+
+            if (remaining <= 0) {
+                if (gameTimer) clearInterval(gameTimer);
+                setTimeout(showVictoryModal, 400);
+            }
+        }
+
+        // 一鍵自動撿取功能（環保機器人自動掃描並逐個清理）
+        function triggerAutoClean() {
+            if (isAutoCleaning || remaining <= 0) return;
+            isAutoCleaning = true;
+            if (gameTimer) clearInterval(gameTimer);
+
+            const tipText = document.getElementById('ai-tip-text');
+            tipText.innerHTML = `🤖 AI 環保機器人啟動中：正在極速自動清理場上剩餘的海洋廢棄物...`;
+
+            const items = Array.from(document.querySelectorAll('.trash-item:not(.trash-picked)'));
+            if (items.length === 0) return;
+
+            let index = 0;
+            const intervalTime = Math.max(30, Math.min(80, 2000 / items.length));
+
+            const timer = setInterval(() => {
+                if (index >= items.length) {
+                    clearInterval(timer);
+                    return;
+                }
+
+                const item = items[index];
+                if (!item.classList.contains('trash-picked')) {
+                    const pts = parseInt(item.dataset.points) || 10;
+                    const name = item.dataset.name || '垃圾';
+                    
+                    item.classList.add('trash-picked');
+                    score += pts;
+                    remaining -= 1;
+                    updateUI();
+
+                    const rect = item.getBoundingClientRect();
+                    showFloatingScore(rect.left + 20, rect.top + 20, `+${pts}`);
+                    playPopSound();
+                }
+
+                index++;
+
+                if (remaining <= 0) {
+                    clearInterval(timer);
+                    setTimeout(showVictoryModal, 400);
+                }
+            }, intervalTime);
+        }
+
+        // 更新頂部介面分數
+        function updateUI() {
+            document.getElementById('score').innerText = score;
+            document.getElementById('remaining').innerText = remaining;
+        }
+
+        // 顯示浮動加分特效
+        function showFloatingScore(x, y, text) {
+            const div = document.createElement('div');
+            div.className = 'fixed text-amber-600 font-extrabold text-lg floating-score pointer-events-none z-40 title-font';
+            div.style.left = `${x}px`;
+            div.style.top = `${y}px`;
+            div.innerText = text;
+            document.body.appendChild(div);
+            setTimeout(() => div.remove(), 700);
+        }
+
+        // 更新 AI 回饋訊息
+        function updateAIFeedback(trashName) {
+            const tipText = document.getElementById('ai-tip-text');
+            const randomMsg = aiFeedbackList[Math.floor(Math.random() * aiFeedbackList.length)];
+            tipText.innerHTML = `AI 環保小幫手：成功清除 <b>${trashName}</b>！ ${randomMsg}`;
+            
+            const box = document.getElementById('ai-tip-box');
+            box.classList.add('scale-105', 'bg-emerald-50');
+            setTimeout(() => box.classList.remove('scale-105', 'bg-emerald-50'), 300);
+        }
+
+        // 悅耳清脆音效 (Web Audio API)
+        function playPopSound() {
+            try {
+                const AudioContext = window.AudioContext || window.webkitAudioContext;
+                if (!AudioContext) return;
+                const ctx = new AudioContext();
+                const osc = ctx.createOscillator();
+                const gain = ctx.createGain();
+                
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(450, ctx.currentTime);
+                osc.frequency.exponentialRampToValueAtTime(900, ctx.currentTime + 0.12);
+                
+                gain.gain.setValueAtTime(0.12, ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.12);
+                
+                osc.connect(gain);
+                gain.connect(ctx.destination);
+                
+                osc.start();
+                osc.stop(ctx.currentTime + 0.12);
+            } catch (err) {
+                // 忽略音效限制
+            }
+        }
+
+        // 顯示任務成功視窗
+        function showVictoryModal() {
+            document.getElementById('final-score').innerText = score;
+            const modal = document.getElementById('victory-modal');
+            modal.classList.remove('hidden');
+            setTimeout(() => {
+                modal.classList.remove('opacity-0');
+                modal.firstElementChild.classList.remove('scale-95');
+                modal.firstElementChild.classList.add('scale-100');
+            }, 10);
+        }
+
+        // 重新開始遊戲
+        function restartGame() {
+            initGame();
+        }
+
+        // 前往下一關
+        function nextLevel() {
+            level++;
+            initGame();
+        }
+
+        // 畫面載入完成時初始化遊戲
+        window.onload = function() {
+            initGame();
+        };
+    </script>
+</body>
+</html>
